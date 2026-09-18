@@ -1,0 +1,19 @@
+# Deps / build
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Env (chaves locais — use .env.example como base)
+.env
+.env.*.local
+
+# Logs / SO
+*.log
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
