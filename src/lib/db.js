@@ -233,11 +233,21 @@ export function useChildTable(table, localKey, userId, patientId) {
 }
 
 // ---- Anamnese: 1 ficha por paciente (upsert por patient_id) ----
-const ANAMNESE_FIELDS = ['queixa_principal', 'historico', 'hipertensao', 'diabete', 'cardiopatia', 'alergias', 'medicamentos', 'cirurgias', 'fumante', 'gestante', 'observacoes'];
+const ANAMNESE_FIELDS = ['queixa_principal', 'historico', 'hipertensao', 'diabete', 'cardiopatia', 'alergias', 'medicamentos', 'cirurgias', 'tabagista', 'gestante', 'observacoes'];
 export const ANAMNESE_DEFAULTS = {
   queixa_principal: '', historico: '', hipertensao: false, diabete: false,
   cardiopatia: false, alergias: '', medicamentos: '', cirurgias: '',
-  fumante: false, gestante: false, observacoes: '',
+  tabagista: false, gestante: false, observacoes: '',
+};
+// Legado: antes o campo se chamava 'fumante' — normaliza para 'tabagista'
+// sem perder o valor já salvo (nuvem antiga ou espelho local).
+const normalizeAnamnese = (row) => {
+  if (!row) return row;
+  if (row.tabagista === undefined && row.fumante !== undefined) {
+    const { fumante, ...rest } = row;
+    return { ...rest, tabagista: fumante };
+  }
+  return row;
 };
 
 export function useAnamnese(userId, patientId) {
@@ -253,10 +263,10 @@ export function useAnamnese(userId, patientId) {
         const { data: row, error } = await supabase.from('anamneses').select('*')
           .eq('user_id', userId).eq('patient_id', patientId).maybeSingle();
         if (error) throw error;
-        if (alive) { setData(row || null); setCloud(true); }
+        if (alive) { setData(normalizeAnamnese(row) || null); setCloud(true); }
       } catch {
         if (alive) {
-          setData(store.get('odonto_anamnesis', []).find((r) => r.patient_id === patientId) || null);
+          setData(normalizeAnamnese(store.get('odonto_anamnesis', []).find((r) => r.patient_id === patientId)) || null);
           setCloud(false);
         }
       } finally { if (alive) setLoading(false); }

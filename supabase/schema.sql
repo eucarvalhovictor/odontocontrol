@@ -170,7 +170,7 @@ create table if not exists public.anamneses (
   alergias text,
   medicamentos text,
   cirurgias text,
-  fumante boolean not null default false,
+  tabagista boolean not null default false,
   gestante boolean not null default false,
   observacoes text,
   updated_at timestamptz not null default now()

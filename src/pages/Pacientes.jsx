@@ -13,7 +13,7 @@ const PLAN_STATUS = ['planejado', 'em_andamento', 'concluido'];
 const PLAN_LABEL = { planejado: 'Planejado', em_andamento: 'Em Andamento', concluido: 'Concluído' };
 const nextPlan = (s) => PLAN_STATUS[(PLAN_STATUS.indexOf(s) + 1) % PLAN_STATUS.length];
 const EXAM_TYPES = ['Radiografia Panorâmica', 'Periapical', 'Interproximal', 'Tomografia', 'Telerradiografia', 'Foto Clínica', 'Outro'];
-const ANAM_BOOL = [['hipertensao', 'Hipertensão'], ['diabete', 'Diabetes'], ['cardiopatia', 'Cardiopatia'], ['fumante', 'Fumante'], ['gestante', 'Gestante']];
+const ANAM_BOOL = [['hipertensao', 'Hipertensão'], ['diabete', 'Diabetes'], ['cardiopatia', 'Cardiopatia'], ['tabagista', 'Tabagista'], ['gestante', 'Gestante']];
 const ANAM_TEXT = ['queixa_principal', 'historico', 'alergias', 'medicamentos', 'cirurgias', 'observacoes'];
 
 export default function Pacientes() {
