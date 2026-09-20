@@ -33,22 +33,32 @@ function useAllPlans(userId) {
 }
 
 const CATS = ['Aluguel', 'Salários', 'Materiais', 'Equipamentos', 'Marketing', 'Contas', 'Outros'];
+const REC_CATS = ['Consulta', 'Procedimento', 'Retorno', 'Convênio', 'Particular', 'Outros'];
 
 export default function Financeiro() {
   const { user } = useAuth();
   const id = user?.id;
   const plans = useAllPlans(id);
   const exp = useCloudTable('expenses', id);
+  const rec = useCloudTable('receipts', id);
   const [desc, setDesc] = useState('');
   const [cat, setCat] = useState('Outros');
   const [valor, setValor] = useState('');
   const [data, setData] = useState(todayISO());
-  const loading = plans.loading || exp.loading;
-  const cloud = plans.cloud === false || exp.cloud === false ? false : true;
+  const [rDesc, setRDesc] = useState('');
+  const [rCat, setRCat] = useState('Particular');
+  const [rValor, setRValor] = useState('');
+  const [rData, setRData] = useState(todayISO());
+  const loading = plans.loading || exp.loading || rec.loading;
+  const cloud = plans.cloud === false || exp.cloud === false || rec.cloud === false ? false : true;
+  const cloudDetail = exp.cloudError || rec.cloudError || plans.cloud === false ? (exp.cloudError || rec.cloudError || '') : '';
+  const cloudTable = exp.cloud === false ? 'expenses' : rec.cloud === false ? 'receipts' : '';
 
   const done = plans.items.filter((p) => p.status === 'concluido');
   const open = plans.items.filter((p) => p.status !== 'concluido');
-  const recebido = done.reduce((s, p) => s + (+p.valor || 0), 0);
+  const recebidoPlanos = done.reduce((s, p) => s + (+p.valor || 0), 0);
+  const recebidoManual = rec.items.reduce((s, r) => s + (+r.valor || 0), 0);
+  const recebido = recebidoPlanos + recebidoManual;
   const aReceber = open.reduce((s, p) => s + (+p.valor || 0), 0);
   const gastoMat = plans.items.reduce((s, p) => s + matCost(p.materiais), 0);
   const despesas = exp.items.reduce((s, e) => s + (+e.valor || 0), 0);
@@ -56,20 +66,23 @@ export default function Financeiro() {
   const lucro = recebido - gastos;
   const margem = recebido > 0 ? Math.round((lucro / recebido) * 100) : 0;
 
-  // Últimos 6 meses: recebido (concluídos) x gastos (materiais + despesas)
+  // Últimos 6 meses: recebido (concluídos + manuais) x gastos (materiais + despesas)
   const months = [];
   const now = new Date();
   for (let k = 5; k >= 0; k--) {
     const d = new Date(now.getFullYear(), now.getMonth() - k, 1);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const label = d.toLocaleString('pt-BR', { month: 'short' }).replace('.', '');
-    const rec = done.filter((p) => (p.created_at || '').slice(0, 7) === key)
+    const recPlan = done.filter((p) => (p.created_at || '').slice(0, 7) === key)
       .reduce((s, p) => s + (+p.valor || 0), 0);
+    const recMan = rec.items.filter((r) => (r.data || '').slice(0, 7) === key)
+      .reduce((s, r) => s + (+r.valor || 0), 0);
+    const rec2 = recPlan + recMan;
     const gm = plans.items.filter((p) => (p.created_at || '').slice(0, 7) === key)
       .reduce((s, p) => s + matCost(p.materiais), 0);
     const de = exp.items.filter((e) => (e.data || '').slice(0, 7) === key)
       .reduce((s, e) => s + (+e.valor || 0), 0);
-    months.push({ label, rec, gas: gm + de });
+    months.push({ label, rec: rec2, gas: gm + de });
   }
   const maxV = Math.max(1, ...months.flatMap((m) => [m.rec, m.gas]));
 
@@ -80,15 +93,23 @@ export default function Financeiro() {
     setDesc(''); setCat('Outros'); setValor(''); setData(todayISO());
   };
 
+  const addRec = async () => {
+    if (!rDesc.trim()) return alert('Descreva o recebimento');
+    if (!(+rValor > 0)) return alert('Informe um valor maior que zero');
+    await rec.add({ descricao: rDesc.trim(), categoria: rCat, valor: +rValor, data: rData || todayISO() });
+    setRDesc(''); setRCat('Particular'); setRValor(''); setRData(todayISO());
+  };
+
   const ordered = [...exp.items].sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')));
+  const orderedRec = [...rec.items].sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')));
 
   if (loading) return <div className="auth-loading"><div className="spin" /></div>;
 
   return (
     <>
-      <CloudBar cloud={cloud} />
+      <CloudBar cloud={cloud} table={cloudTable} detail={cloudDetail} />
       <div className="cards fin-cards">
-        <div className="card hero"><small>Recebido (concluídos)</small><b><TrendingUp size={22} />{BRL(recebido)}</b><span>{done.length} procedimentos concluídos</span></div>
+        <div className="card hero"><small>Recebido (concluídos + manuais)</small><b><TrendingUp size={22} />{BRL(recebido)}</b><span>{done.length} concluídos • {rec.items.length} manuais ({BRL(recebidoManual)})</span></div>
         <div className="card"><small>A receber</small><b><Hourglass size={22} />{BRL(aReceber)}</b><span>{open.length} em aberto</span></div>
         <div className="card"><small>Materiais consumidos</small><b><TrendingDown size={22} />{BRL(gastoMat)}</b><span>nos planos de tratamento</span></div>
         <div className="card"><small>Despesas lançadas</small><b><TrendingDown size={22} />{BRL(despesas)}</b><span>{exp.items.length} lançamentos</span></div>
@@ -109,6 +130,30 @@ export default function Financeiro() {
             ))}
           </div>
           <div className="fin-legend"><span><i className="rec" /> Recebido</span><span><i className="gas" /> Gastos</span></div>
+        </div>
+        <div className="panel">
+          <h3>Lançar recebimento</h3>
+          <label>Descrição*<input value={rDesc} onChange={(e) => setRDesc(e.target.value)} placeholder="Ex: Consulta, limpeza, convênio..." /></label>
+          <div className="row">
+            <label>Categoria
+              <select value={rCat} onChange={(e) => setRCat(e.target.value)}>
+                {REC_CATS.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </label>
+            <label>Valor (R$)*<input type="number" min="0" step="0.01" value={rValor} onChange={(e) => setRValor(e.target.value)} placeholder="0,00" /></label>
+            <label>Data<input type="date" value={rData} onChange={(e) => setRData(e.target.value)} /></label>
+          </div>
+          <button className="btn-primary" onClick={addRec}><Plus size={16} /> Adicionar recebimento</button>
+          <h3 style={{ marginTop: 26 }}>Recebimentos</h3>
+          <div className="list">
+            {orderedRec.slice(0, 12).map((r) => (
+              <div className="row-item" key={r.id}>
+                <div><b>{r.descricao}</b><br /><small>{r.categoria} • {r.data?.split('-').reverse().join('/') || '—'} • <b style={{ color: '#15803d' }}>{BRL(r.valor)}</b></small></div>
+                <button className="icon-btn danger" title="Excluir lançamento" onClick={() => { if (confirm('Excluir lançamento?')) rec.remove(r.id); }}><Trash2 size={14} /></button>
+              </div>
+            ))}
+            {!orderedRec.length && <small style={{ color: '#5b6b7c' }}>Nenhum recebimento manual. Registre consultas e procedimentos recebidos aqui.</small>}
+          </div>
         </div>
         <div className="panel">
           <h3>Lançar gasto</h3>

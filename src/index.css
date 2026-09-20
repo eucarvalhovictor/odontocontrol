@@ -40,7 +40,8 @@ img{max-width:100%}
 :focus-visible{outline:2px solid var(--teal-500);outline-offset:2px}
 
 /* ============ ESTRUTURA ============ */
-.app-shell{display:grid;grid-template-columns:272px 1fr;min-height:100vh}
+.app-shell{display:grid;grid-template-columns:272px 1fr;min-height:100vh;transition:grid-template-columns .25s ease}
+.app-shell.collapsed{grid-template-columns:88px 1fr}
 .sidebar{
   position:sticky;top:0;height:100vh;display:flex;flex-direction:column;
   padding:24px 16px 18px;color:#fff;overflow:hidden;
@@ -81,6 +82,39 @@ img{max-width:100%}
   background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.12);padding:11px;border-radius:13px;
   cursor:pointer;font-weight:600;font-size:13.5px}
 .btn-logout:hover{background:rgba(0,0,0,.34)}
+/* ============ SIDEBAR RECOLHIDA (desktop: só ícones + botão expandir) ============ */
+.sidebar{transition:padding .25s ease}
+/* Aba lateral discreta na borda da sidebar */
+.sidebar{overflow:visible}
+.side-edge{position:absolute;top:50%;right:-11px;transform:translateY(-50%);
+  width:22px;height:64px;display:grid;place-items:center;cursor:pointer;z-index:6;
+  color:rgba(255,255,255,.85);background:rgba(11,59,57,.9);
+  border:1px solid rgba(255,255,255,.22);border-radius:999px;
+  box-shadow:0 6px 18px rgba(0,0,0,.3);backdrop-filter:blur(6px);
+  transition:background .18s ease,transform .18s ease}
+.side-edge:hover{background:rgba(20,184,166,.9);color:#fff}
+.side-edge:active{transform:translateY(-50%) scale(.94)}
+.sidebar.collapsed{padding:24px 12px 16px}
+.sidebar.collapsed .brand{justify-content:center;padding:2px 0 20px}
+.sidebar.collapsed .brand-text{display:none}
+.sidebar.collapsed .nav{display:grid;gap:6px;justify-items:stretch}
+.sidebar.collapsed .nav-label{display:none}
+.sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;gap:0}
+.sidebar.collapsed .nav-link .nav-text{display:none}
+.sidebar.collapsed .nav-link:hover{transform:none}
+.sidebar.collapsed .side-foot{justify-items:center}
+.sidebar.collapsed .user-chip{justify-content:center;padding:8px;background:transparent;border-color:transparent}
+.sidebar.collapsed .user-meta{display:none}
+.sidebar.collapsed .btn-logout{width:100%;padding:11px 0;gap:0}
+.sidebar.collapsed .btn-logout .nav-text{display:none}
+.sidebar:not(.collapsed) .nav-text{white-space:nowrap}
+@media(max-width:1000px){
+  .app-shell,.app-shell.collapsed{grid-template-columns:1fr}
+  .side-toggle{display:none}
+  .sidebar.collapsed{padding:10px 12px}
+  .sidebar.collapsed .nav{display:flex}
+  .sidebar.collapsed .nav-link{padding:11px 6px}
+}
 .main{padding:30px 34px 40px;max-width:1220px;width:100%;min-width:0}
 .topbar{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;
   gap:12px;flex-wrap:wrap;margin:-30px -34px 24px;padding:20px 34px;

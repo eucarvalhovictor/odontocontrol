@@ -18,7 +18,7 @@ const ANAM_TEXT = ['queixa_principal', 'historico', 'alergias', 'medicamentos', 
 
 export default function Pacientes() {
   const { user } = useAuth();
-  const { items: list, loading, cloud, add, update, remove } = useCloudTable('patients', user?.id);
+  const { items: list, loading, cloud, cloudError, add, update, remove } = useCloudTable('patients', user?.id);
   const [params, setParams] = useSearchParams();
   const [q, setQ] = useState('');
   const [modal, setModal] = useState(null);
@@ -73,7 +73,7 @@ export default function Pacientes() {
 
   return (
     <>
-      <CloudBar cloud={cloud} />
+      <CloudBar cloud={cloud} table="patients" detail={cloudError} />
       <div className="toolbar">
         <SearchBar value={q} onChange={setQ} placeholder="Buscar por nome, CPF, telefone..." />
         <button className="btn-primary" onClick={() => open(null)}><Plus size={16} /> Novo paciente</button>

@@ -11,6 +11,7 @@ export const TABLES = {
   prescriptions: 'odonto_prescriptions',
   supplies: 'odonto_supplies',
   expenses: 'odonto_expenses',
+  receipts: 'odonto_receipts',
   evolutions: 'odonto_evolutions',
   odontogram: 'odonto_odontogram',
   perio: 'odonto_perio',
@@ -29,6 +30,7 @@ export function useCloudTable(table, userId) {
   const [items, setItems] = useState(() => store.get(localKey, []));
   const [loading, setLoading] = useState(true);
   const [cloud, setCloud] = useState(null); // null = desconhecido, true/false
+  const [cloudError, setCloudError] = useState('');
 
   useEffect(() => {
     if (!userId) { setLoading(false); return; }
@@ -36,17 +38,19 @@ export function useCloudTable(table, userId) {
     (async () => {
       try {
         const rows = await cloudList(table, userId);
-        if (alive) { setItems(rows); setCloud(true); snap(rows); }
-      } catch {
-        if (alive) { setItems(store.get(localKey, [])); setCloud(false); }
+        if (alive) { setItems(rows); setCloud(true); setCloudError(''); snap(rows); }
+      } catch (e) {
+        if (alive) {
+          setItems(store.get(localKey, [])); setCloud(false);
+          setCloudError(e?.message || String(e));
+          console.warn(`[odonto] tabela "${table}" em modo local:`, e?.message || e);
+        }
       } finally { if (alive) setLoading(false); }
     })();
     return () => { alive = false; };
   }, [table, userId]);
 
   const localSave = (next) => { store.set(localKey, next); setItems(next); setCloud(false); };
-  // Espelho local da última leitura/gravação em nuvem: se a rede ou a
-  // tabela falhar depois, o modo local opera sobre dados atuais.
   const snap = (rows) => { try { store.set(localKey, rows); } catch { /* quota cheia: segue sem espelho */ } };
 
   const add = useCallback(async (obj) => {
@@ -98,7 +102,7 @@ export function useCloudTable(table, userId) {
     return false;
   }, [table, userId, items]);
 
-  return { items, loading, cloud, add, update, remove };
+  return { items, loading, cloud, cloudError, add, update, remove };
 }
 
 // ---- Configurações (1 linha por dentista) ----

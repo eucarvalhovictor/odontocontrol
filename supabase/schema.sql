@@ -94,6 +94,8 @@ create index if not exists idx_evolutions_appt on public.evolutions (appointment
 create index if not exists idx_evolutions_patient on public.evolutions (patient_id);
 create index if not exists idx_odontogram_patient on public.odontogram (patient_id);
 create index if not exists idx_dentists_user on public.dentists (user_id);
+create index if not exists idx_expenses_user on public.expenses (user_id);
+create index if not exists idx_receipts_user on public.receipts (user_id);
 
 -- ---------- RLS: cada dentista só vê o que é dele ----------
 alter table public.profiles enable row level security;
@@ -108,6 +110,8 @@ alter table public.exams enable row level security;
 alter table public.evolutions enable row level security;
 alter table public.odontogram enable row level security;
 alter table public.dentists enable row level security;
+alter table public.expenses enable row level security;
+alter table public.receipts enable row level security;
 
 drop policy if exists "own_profile" on public.profiles;
 create policy "own_profile" on public.profiles
@@ -155,6 +159,14 @@ create policy "owner_all" on public.odontogram
 
 drop policy if exists "owner_all" on public.dentists;
 create policy "owner_all" on public.dentists
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "owner_all" on public.expenses;
+create policy "owner_all" on public.expenses
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "owner_all" on public.receipts;
+create policy "owner_all" on public.receipts
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- ---------- Prontuário: anamnese, plano de tratamento, exames ----------
@@ -230,6 +242,27 @@ create table if not exists public.dentists (
   user_id uuid not null references auth.users (id) on delete cascade,
   nome text not null,
   cro text,
+  created_at timestamptz not null default now()
+);
+
+-- ---------- Despesas e recebimentos manuais (Financeiro) ----------
+create table if not exists public.expenses (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  descricao text not null,
+  categoria text not null default 'Outros',
+  valor numeric not null default 0,
+  data text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.receipts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  descricao text not null,
+  categoria text not null default 'Outros',
+  valor numeric not null default 0,
+  data text,
   created_at timestamptz not null default now()
 );
 

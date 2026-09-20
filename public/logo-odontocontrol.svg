@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 160">
+  <defs>
+    <linearGradient id="odonto-g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f766e"/>
+      <stop offset="1" stop-color="#2dd4bf"/>
+    </linearGradient>
+  </defs>
+  <!-- Ícone -->
+  <rect x="8" y="8" width="144" height="144" rx="36" fill="url(#odonto-g)"/>
+  <path d="M80 44 C73 34 53 34 50 51 C47 65 53 77 55 92 C57 106 57 121 64 124 C71 127 72 115 72 105 C72 96 74 91 80 91 C86 91 88 96 88 105 C88 115 89 127 96 124 C103 121 103 106 105 92 C107 77 113 65 110 51 C107 34 87 34 80 44 Z" fill="#ffffff"/>
+  <path d="M122 28 l3.2 6.6 6.6 3.2 -6.6 3.2 -3.2 6.6 -3.2 -6.6 -6.6 -3.2 6.6 -3.2 Z" fill="#a7f3d0"/>
+  <!-- Texto centralizado verticalmente -->
+  <text x="172" y="99" font-family="'Plus Jakarta Sans', Inter, Arial, sans-serif" font-weight="800" font-size="56" letter-spacing="-1" dominant-baseline="central" fill="#062a28">Odonto<tspan fill="#0f766e">Control</tspan></text>
+</svg>
